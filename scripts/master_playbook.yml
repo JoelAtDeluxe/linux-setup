@@ -14,3 +14,12 @@
          - curl
          - vim
        when: ansible_distribution == "Ubuntu"
+    - name: Add Standard Tooling
+      dnf:
+        name: '{{item}}'
+        state: latest
+      with_items:
+         - git
+         - wget
+         - curl
+      when: ansible_distribution == "fedora"
