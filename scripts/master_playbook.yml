@@ -1,0 +1,16 @@
+---
+
+- name: Common Tools
+  hosts: localhost
+  become: sudo
+  tasks:
+     - name: Add standard tooling
+       apt: 
+         name: '{{item}}'
+         state: latest
+       with_items:
+         - git
+         - wget
+         - curl
+         - vim
+       when: ansible_distribution == "Ubuntu"
