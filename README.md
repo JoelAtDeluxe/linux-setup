@@ -5,9 +5,23 @@ Ansible scripts to help me set up my personal linux set up, targeting:
 * Ubuntu 18.04
 * Fedora 28
 
-## Pre-reqs for Fedora
+## Prereqs
+As these are ansible scripts, a necessary component is ansible. 
+
+* Install:
+    * ansible
+* Run as:
+    * root
+
+### Notes for Fedora
 There are some setup requirements for the script to actually work
 
 * Install:
     * python2-dnf
-    * ansible (at the time of this writting, the current version is 2.5.2)
+
+### Pre-reqs for Ubuntu
+n/t
+
+## Running
+
+Simply run `ansible-playbook master-playbook.yml` to start the process
