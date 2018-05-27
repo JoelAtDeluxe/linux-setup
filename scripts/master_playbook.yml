@@ -1,19 +1,25 @@
 ---
 
+# - name: Update all
+#   hosts: localhost
+#   tasks:
+#     - name: Update repos and software
+#       apt: 
+
 - name: Common Tools
   hosts: localhost
   become: sudo
   tasks:
-     - name: Add standard tooling
-       apt: 
-         name: '{{item}}'
-         state: latest
-       with_items:
-         - git
-         - wget
-         - curl
-         - vim
-       when: ansible_distribution == "Ubuntu"
+    - name: Add standard tooling
+      apt: 
+        name: '{{item}}'
+        state: latest
+      with_items:
+        - git
+        - wget
+        - curl
+        - vim
+      when: ansible_distribution == "Ubuntu"
     - name: Add Standard Tooling
       dnf:
         name: '{{item}}'
