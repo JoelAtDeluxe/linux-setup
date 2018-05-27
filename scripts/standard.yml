@@ -1,0 +1,6 @@
+all:
+  software:
+    - git
+    - vim
+    - wget
+    - curl
