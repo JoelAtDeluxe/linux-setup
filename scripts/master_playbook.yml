@@ -1,3 +1,4 @@
+# ansible-configured
 ---
 
 # - name: Update all
@@ -19,7 +20,7 @@
         - wget
         - curl
         - vim
-      when: ansible_distribution == "Ubuntu"
+      when: ansible_distribution == 'Ubuntu'
     - name: Add Standard Tooling (Fedora)
       dnf:
         name: '{{item}}'
@@ -29,4 +30,6 @@
         - wget
         - curl
         - konsole
-      when: ansible_distribution == "Fedora"
+      when: ansible_distribution == 'Fedora'
+      
+ 
