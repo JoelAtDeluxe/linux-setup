@@ -10,7 +10,7 @@
   hosts: localhost
   become: sudo
   tasks:
-    - name: Add standard tooling
+    - name: Add standard tooling (Ubuntu)
       apt: 
         name: '{{item}}'
         state: latest
@@ -20,12 +20,13 @@
         - curl
         - vim
       when: ansible_distribution == "Ubuntu"
-    - name: Add Standard Tooling
+    - name: Add Standard Tooling (Fedora)
       dnf:
         name: '{{item}}'
         state: latest
       with_items:
-         - git
-         - wget
-         - curl
-      when: ansible_distribution == "fedora"
+        - git
+        - wget
+        - curl
+        - konsole
+      when: ansible_distribution == "Fedora"
