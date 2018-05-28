@@ -17,29 +17,6 @@
         state: latest
       when: ansible_distribution == 'Fedora'
 
-# TODO: Move to dev section; allow for docker install to fail
-- name: Add Docker support
-  hosts: localhost
-  tasks:
-    - name: Add Docker-ce repo (Ubuntu)
-      block:
-        - apt_repository:
-          repo: 
-      when: ansible_distribution == 'Ubuntu'
-    - name: Install Docker (Ubuntu)
-      when: ansible_distribution == 'Ubuntu'
-    - name: Add Docker-ce repo (Fedora)
-      block:
-        - yum_repository:
-            name: docker-ce
-            description: Docker (community edition) repo
-            baseurl: https://download.docker.com/linux/fedora/docker-ce.repo
-        - dnf:
-            state: latest
-            name: docker-ce
-      when: ansible_distribution == 'Fedora'
-        
-
 - name: Common Tools
   hosts: localhost
   become: yes
@@ -64,12 +41,11 @@
       with_items: "{{ std_software }}"
       when: ansible_distribution == 'Fedora'
 
-
 - name: Developer Tools
   # Two flavors of tools: Stuff we'll use directly
   # Stuff we'll use indirectly (e.g. maybe erlang requires gcc)
   hosts: localhost
-  become: yes
+  become: true
   vars:
     std_software:
       - dkms
@@ -79,67 +55,88 @@
       - automake
       - make
       - inotify-tools
-  tasks:
-    - name: Setup Git (Ubuntu)
+  tasks: 
+    - name: Setup Git Creds
       block:
-        when: ansible_distribution == 'Ubuntu'
-        - name: Build libsecret
-          shell: make
-          args:
-            chdir: /usr/share/doc/git/contrib/credential/libsecret
-        - name: Set libsecret
+        - name: Ubuntu
+          when: ansible_distribution == 'Ubuntu'
+          block:
+            - name: Build libsecret
+              shell: make
+              args:
+                chdir: /usr/share/doc/git/contrib/credential/libsecret
+            - name: Set libsecret
+              git_config:
+                scope: global
+                name: credential.helper
+                value: /usr/libexec/git-core/git-credential-libsecret
+        - name: Fedora
+          when: ansible_distribution == 'Fedora'
           git_config:
             scope: global
             name: credential.helper
             value: /usr/libexec/git-core/git-credential-libsecret
-   
-    # Ubuntu stuff
-    - name: Add Common tooling (Ubuntu)
-      apt: 
-        state: latest
-      with_items: "{{ std_software }}"
-      when: ansible_distribution == 'Ubuntu'
-
-    - name: Ubuntu-versioned tooling
-      apt:
-        state: latest
-      with_items:
-        - libssl-dev
-        - ncurses-dev
-        - apt-transport-https
-        - ca-certificates
-        - software-properties-common
-      when: ansible_distribution == 'Ubuntu'
-    # Fedora stuf
-    - name: Setup Git (Fedora)
-        git_config:
-          scope: global
-          name: credential.helper
-          value: /usr/libexec/git-core/git-credential-libsecret
-      when: ansible_distribution == 'Fedora'
-    - name: Add Standard Tooling (Fedora)
-      dnf:
-        name: '{{item}}'
-        state: latest
-      with_items: "{{ std_software }}"
-      when: ansible_distribution == 'Fedora'
-
-    - name: Fedora-versioned Tooling (Fedora)
-      dnf:
-        name: '{{item}}'
-        state: latest
-      with_items: 
-        - kernel-devel
-        - kernel-headers
-        - libglvnd-glx
-        - libglvnd-opengl
-        - libglvnd-devel
-        - pkgconfig
-        - dnf-plugins-core
-        - openssl-devel
-        - glib2-devel
-        - ncurses-devel
-      when: ansible_distribution == 'Fedora'
+    - name: Add Tooling
+      block:
+        - when: ansible_distribution == 'Ubuntu'
+          block: 
+            - apt: 
+                name: "{{ item }}"
+                state: latest
+              with_items: "{{ std_software }}"
+            - apt:
+                name: " {{ item }} "
+                state: latest
+              with_items:
+                - libssl-dev
+                - ncurses-dev
+                - apt-transport-https
+                - ca-certificates
+                - software-properties-common
+        - when: ansible_distribution == 'Fedora'
+          block: 
+            - dnf:
+                name: "{{ item }}"
+                state: latest
+              with_items: "{{ std_software }}"
+            - dnf:
+                name: "{{ item }}"
+                state: latest
+              with_items:
+                - kernel-devel
+                - kernel-headers
+                - libglvnd-glx
+                - libglvnd-opengl
+                - libglvnd-devel
+                - pkgconfig
+                - dnf-plugins-core
+                - openssl-devel
+                - glib2-devel
+                - ncurses-devel
+    - name: Add Docker
+      block:
+        # TODO: add in Ubuntu support
+        # - when: ansible_distribution == 'Ubuntu'
+          # block:
+          #   - apt_repository:
+          #     repo: 
+        - when: ansible_distribution == 'Fedora'
+          block:
+            - yum_repository:
+                name: docker-ce
+                description: Docker (community edition) repo
+                baseurl: https://download.docker.com/linux/fedora/docker-ce.repo
+            - dnf:
+                state: latest
+                name: docker-ce
+      rescue:
+        - debug: msg="Unable to install docker"
+    - name: Something
+      block:
+        - name: Ubuntu
+          when: ansible_distribution == 'Ubuntu'
+        - name: Fedora
+          when: ansible_distribution == 'Fedora'
 
 
 - name: OhMyZSH + configurations
