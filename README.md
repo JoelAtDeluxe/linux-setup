@@ -14,13 +14,14 @@ As these are ansible scripts, a necessary component is ansible.
     * root
 
 ### Notes for Fedora
-There are some setup requirements for the script to actually work
 
 * Install:
     * python2-dnf
 
 ### Pre-reqs for Ubuntu
-n/t
+
+* Install:
+    * python-apt
 
 ## Running
 
