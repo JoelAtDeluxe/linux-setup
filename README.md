@@ -6,7 +6,8 @@ Ansible scripts to help me set up my personal linux set up, targeting:
 * Fedora 28
 
 ## Prereqs
-As these are ansible scripts, a necessary component is ansible. 
+As these are ansible scripts, a necessary component is ansible. Note that this script assumes the user
+will be running Gnome as their desktop environment. Most of the playbook should work regardless of whether it's gnome, kde, or something else, but obviously non-gnome components will not work when the environment is not gnome.
 
 * Install:
     * ansible

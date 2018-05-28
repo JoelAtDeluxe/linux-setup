@@ -28,6 +28,7 @@
       - vim
       - konsole
       - zsh
+      - unzip
   tasks:
     - name: Add standard tooling (Ubuntu)
       apt: 
@@ -138,7 +139,6 @@
         - name: Fedora
           when: ansible_distribution == 'Fedora'
 
-
 - name: OhMyZSH + configurations
   hosts: localhost
   become: yes
@@ -156,7 +156,6 @@
     # TODO: set theme to agnoster
     # TODO: Set plugins to git, dotenv
     # TODO: if completely overwriting, source $ZSH/oh-my-zsh.sh
-
 
 - name: ASDF version manager
   hosts: localhost
@@ -207,3 +206,50 @@
         - shell: "{{ asdf }} plugin-add elm https://github.com/vic/asdf-elm.git"
         - shell: "{{ asdf }} install elm 0.18.0"
         - shell: "{{ asdf }} global  elm 0.18.0"
+
+- name: Install Cool fonts
+  hosts: localhost
+  become: yes
+  vars:
+    font_base: /usr/share/fonts
+  tasks:
+    - name: Zipped TTF fonts
+      block: 
+        - get_url:
+          url: {{ item.url }}
+          dest: "/tmp/{{ item.name }}.zip"
+        - file: 
+            state: directory 
+            path: {{ font_base }}/{{ item.name }}
+        - unarchive:
+          src: "/tmp/{{ item.name }}.zip"
+          dest: "/tmp/{{ item.name }}"
+        - copy:
+            src: "/tmp/{{ item.name }}/ttf/*.tmp
+            dest: {{ font_base }}/{{ item.name }}
+        - file: 
+            state: absent 
+            path: "/tmp/{{ item.name }}*"
+      with_items:
+        - { name: 'firacode', url: 'https://github.com/tonsky/FiraCode/releases/download/1.205/FiraCode_1.205.zip' }
+        - { name: 'hack', url: 'https://github.com/source-foundry/Hack/releases/download/v3.003/Hack-v3.003-ttf.zip' }
+      
+    # - name: FiraCode
+    #   vars:
+    #     font:
+    #       name: firacode
+    #       url: https://github.com/tonsky/FiraCode/releases/download/1.205/FiraCode_1.205.zip
+    #       dest: "{{ font_base }}/{{ font_name }}"
+    #       src: "/tmp/{{ font_name }}"
+    #   block: 
+    #     - get_url:
+    #       url: {{ font['url'] }}
+    #       dest: "{{ font['src'] }}.zip"
+    #     - file: state=directory path={{ font_dest }}
+    #     - unarchive:
+    #       src: "{{ font['src'] }}.zip"
+    #       dest: {{ font['src'] }}
+    #     - copy:
+    #         src: {{ font['src'] }}/ttf/*.tmp
+    #         dest: {{ font['dest'] }}
+    #     - file: state=absent path="{{ font['src'] }}*"
