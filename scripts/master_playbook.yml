@@ -1,35 +1,57 @@
 # ansible-configured
 ---
 
-# - name: Update all
+- name: Update Repos, bundled software
+  hosts: localhost
+  tasks:
+    - name: Ubuntu
+      apt: 
+        name: "*"
+        state: latest
+        upgrade: yes
+        update_cache: yes
+      when: ansible_distribution == 'Ubuntu'
+    - name: Fedora
+      dnf:
+        name: "*"
+        state: latest
+      when: ansible_distribution == 'Fedora'
+
+
+# - name: Echo stuff
 #   hosts: localhost
+#   vars:
+#     std: 
+#       - one
+#       - two
+#       - three
 #   tasks:
-#     - name: Update repos and software
-#       apt: 
+#     - name: "Inventory stuff"
+#       shell: "touch {{ item }}"
+#       with_items: "{{ std }}"
+        
 
 - name: Common Tools
   hosts: localhost
   become: sudo
+  vars:
+    std_software:
+      - git
+      - wget
+      - curl
+      - vim
+      - konsole
   tasks:
     - name: Add standard tooling (Ubuntu)
       apt: 
-        name: '{{item}}'
         state: latest
-      with_items:
-        - git
-        - wget
-        - curl
-        - vim
+      with_items: "{{ std_software }}"
       when: ansible_distribution == 'Ubuntu'
     - name: Add Standard Tooling (Fedora)
       dnf:
         name: '{{item}}'
         state: latest
-      with_items:
-        - git
-        - wget
-        - curl
-        - konsole
+      with_items: "{{ std_software }}"
       when: ansible_distribution == 'Fedora'
       
  
