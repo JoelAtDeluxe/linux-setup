@@ -17,23 +17,32 @@
         state: latest
       when: ansible_distribution == 'Fedora'
 
-
-# - name: Echo stuff
-#   hosts: localhost
-#   vars:
-#     std: 
-#       - one
-#       - two
-#       - three
-#   tasks:
-#     - name: "Inventory stuff"
-#       shell: "touch {{ item }}"
-#       with_items: "{{ std }}"
+# TODO: Move to dev section; allow for docker install to fail
+- name: Add Docker support
+  hosts: localhost
+  tasks:
+    - name: Add Docker-ce repo (Ubuntu)
+      block:
+        - apt_repository:
+          repo: 
+      when: ansible_distribution == 'Ubuntu'
+    - name: Install Docker (Ubuntu)
+      when: ansible_distribution == 'Ubuntu'
+    - name: Add Docker-ce repo (Fedora)
+      block:
+        - yum_repository:
+            name: docker-ce
+            description: Docker (community edition) repo
+            baseurl: https://download.docker.com/linux/fedora/docker-ce.repo
+        - dnf:
+            state: latest
+            name: docker-ce
+      when: ansible_distribution == 'Fedora'
         
 
 - name: Common Tools
   hosts: localhost
-  become: sudo
+  become: yes
   vars:
     std_software:
       - git
@@ -41,6 +50,7 @@
       - curl
       - vim
       - konsole
+      - zsh
   tasks:
     - name: Add standard tooling (Ubuntu)
       apt: 
@@ -53,5 +63,150 @@
         state: latest
       with_items: "{{ std_software }}"
       when: ansible_distribution == 'Fedora'
-      
- 
+
+
+- name: Developer Tools
+  # Two flavors of tools: Stuff we'll use directly
+  # Stuff we'll use indirectly (e.g. maybe erlang requires gcc)
+  hosts: localhost
+  become: yes
+  vars:
+    std_software:
+      - dkms
+      - gcc
+      - acpid
+      - autoconf
+      - automake
+      - make
+      - inotify-tools
+  tasks:
+    - name: Setup Git (Ubuntu)
+      block:
+        when: ansible_distribution == 'Ubuntu'
+        - name: Build libsecret
+          shell: make
+          args:
+            chdir: /usr/share/doc/git/contrib/credential/libsecret
+        - name: Set libsecret
+          git_config:
+            scope: global
+            name: credential.helper
+            value: /usr/libexec/git-core/git-credential-libsecret
+   
+    # Ubuntu stuff
+    - name: Add Common tooling (Ubuntu)
+      apt: 
+        state: latest
+      with_items: "{{ std_software }}"
+      when: ansible_distribution == 'Ubuntu'
+
+    - name: Ubuntu-versioned tooling
+      apt:
+        state: latest
+      with_items:
+        - libssl-dev
+        - ncurses-dev
+        - apt-transport-https
+        - ca-certificates
+        - software-properties-common
+      when: ansible_distribution == 'Ubuntu'
+    # Fedora stuf
+    - name: Setup Git (Fedora)
+        git_config:
+          scope: global
+          name: credential.helper
+          value: /usr/libexec/git-core/git-credential-libsecret
+      when: ansible_distribution == 'Fedora'
+    - name: Add Standard Tooling (Fedora)
+      dnf:
+        name: '{{item}}'
+        state: latest
+      with_items: "{{ std_software }}"
+      when: ansible_distribution == 'Fedora'
+
+    - name: Fedora-versioned Tooling (Fedora)
+      dnf:
+        name: '{{item}}'
+        state: latest
+      with_items: 
+        - kernel-devel
+        - kernel-headers
+        - libglvnd-glx
+        - libglvnd-opengl
+        - libglvnd-devel
+        - pkgconfig
+        - dnf-plugins-core
+        - openssl-devel
+        - glib2-devel
+        - ncurses-devel
+      when: ansible_distribution == 'Fedora'
+
+
+- name: OhMyZSH + configurations
+  hosts: localhost
+  become: yes
+  become_user: {{ user }}
+  vars:
+    home: "/home/{{ user }}"
+  tasks:
+    - name: Get OhMyZSH
+      shell: "sh -c '$(wget https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh -O -)'"
+    - name: Update Path
+      shell: "echo -e '\nexport PATH=$HOME/bin:/usr/bin:$HOME/.local/bin:$PATH' >> {{ home }}/.zshrc"
+    - name: Spot for Goapth
+      # This is noticably missing from bashrc
+      shell: "echo -e '\nexport GOPATH=' >> {{ home }}/.zshrc"
+    # TODO: set theme to agnoster
+    # TODO: Set plugins to git, dotenv
+    # TODO: if completely overwriting, source $ZSH/oh-my-zsh.sh
+
+
+- name: ASDF version manager
+  hosts: localhost
+  vars:
+    home: "/home/{{ user }}"
+    asdf_root: "{{ home }}/.asdf"
+    asdf: "{{ asdf_root }}/bin/asdf"
+  tasks:
+    - name: Clone project
+      git:
+        repo: https://github.com/asdf-vm/asdf.git
+        dest: {{ asdf_root }}
+        refspec: v0.4.3
+    - name: Update Bash/Zsh
+      block:
+        - shell: "echo -e '\n. {{ asdf_root }}/asdf.sh' >> {{ home }}/.bashrc"
+        - shell: "echo -e '\n. {{ asdf_root }}/completions/asdf.bash' >> {{ home }}/.bashrc"
+        - shell: "echo -e '\n. {{ asdf_root }}/asdf.sh' >> {{ home }}/.zshrc"
+        - shell: "echo -e '\n. {{ asdf_root }}/completions/asdf.bash' >> {{ home }}/.zshrc"
+    - name: Update Project
+      shell: "{{ asdf }} update"
+    - name: Add Elixir
+      block:
+        - shell: "{{ asdf }} plugin-add erlang https://github.com/asdf-vm/asdf-erlang.git"
+        - shell: "{{ asdf }} install erlang 20.3"
+        - shell: "{{ asdf }} global  erlang 20.3"
+        - shell: "{{ asdf }} plugin-add elixir https://github.com/asdf-vm/asdf-elixir.git"
+        - shell: "{{ asdf }} install elixir 1.6"
+        - shell: "{{ asdf }} global  elixir 1.6"
+    - name: Add Golang
+      block:
+        - shell: "{{ asdf }} plugin-add golang https://github.com/kennyp/asdf-golang.git"
+        - shell: "{{ asdf }} install golang 1.10"
+        - shell: "{{ asdf }} global  golang 1.10"
+    - name: Add Rust
+      block:
+        - shell: "{{ asdf }} plugin-add rust https://github.com/code-lever/asdf-rust.git"
+        - shell: "{{ asdf }} install rust 1.26.0"
+        - shell: "{{ asdf }} global  rust 1.26.0"
+    - name: Add Nodejs
+      block:
+        - shell: "{{ asdf }} plugin-add nodejs https://github.com/asdf-vm/asdf-nodejs.git"
+        - shell: "{{ asdf }} install nodejs 10.2.1"
+        - shell: "{{ asdf }} install nodejs 8.11.2"
+        - shell: "{{ asdf }} global  nodejs 10.2.1"
+    - name: Add Elm
+      block:
+        - shell: "{{ asdf }} plugin-add elm https://github.com/vic/asdf-elm.git"
+        - shell: "{{ asdf }} install elm 0.18.0"
+        - shell: "{{ asdf }} global  elm 0.18.0"
