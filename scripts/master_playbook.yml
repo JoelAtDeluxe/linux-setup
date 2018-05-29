@@ -207,32 +207,32 @@
         - shell: "{{ asdf }} install elm 0.18.0"
         - shell: "{{ asdf }} global  elm 0.18.0"
 
-- name: Install Cool fonts
-  hosts: localhost
-  become: yes
-  vars:
-    font_base: /usr/share/fonts
-  tasks:
-    - name: Zipped TTF fonts
-      block: 
-        - get_url:
-          url: "{{ item.url }}"
-          dest: "/tmp/{{ item.name }}.zip"
-        - file: 
-            state: directory 
-            path: "{{ font_base }}/{{ item.name }}"
-        - unarchive:
-          src: "/tmp/{{ item.name }}.zip"
-          dest: "/tmp/{{ item.name }}"
-        - copy:
-            src: "/tmp/{{ item.name }}/ttf/*.tmp"
-            dest: "{{ font_base }}/{{ item.name }}"
-        - file: 
-            state: absent 
-            path: "/tmp/{{ item.name }}*"
-      with_items:
-        - { name: 'firacode', url: 'https://github.com/tonsky/FiraCode/releases/download/1.205/FiraCode_1.205.zip' }
-        - { name: 'hack',     url: 'https://github.com/source-foundry/Hack/releases/download/v3.003/Hack-v3.003-ttf.zip' }
+# - name: Install Cool fonts
+#   hosts: localhost
+#   become: yes
+#   vars:
+#     font_base: /usr/share/fonts
+#   tasks:
+#     - name: Zipped TTF fonts
+#       block: 
+#         - get_url:
+#           url: "{{ item.url }}"
+#           dest: "/tmp/{{ item.name }}.zip"
+#         - file: 
+#             state: directory 
+#             path: "{{ font_base }}/{{ item.name }}"
+#         - unarchive:
+#           src: "/tmp/{{ item.name }}.zip"
+#           dest: "/tmp/{{ item.name }}"
+#         - copy:
+#             src: "/tmp/{{ item.name }}/ttf/*.tmp"
+#             dest: "{{ font_base }}/{{ item.name }}"
+#         - file: 
+#             state: absent 
+#             path: "/tmp/{{ item.name }}*"
+#       with_items:
+#         - { name: 'firacode', url: 'https://github.com/tonsky/FiraCode/releases/download/1.205/FiraCode_1.205.zip' }
+#         - { name: 'hack',     url: 'https://github.com/source-foundry/Hack/releases/download/v3.003/Hack-v3.003-ttf.zip' }
       
     # - name: FiraCode
     #   vars:
