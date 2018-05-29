@@ -132,12 +132,12 @@
                 name: docker-ce
       rescue:
         - debug: msg="Unable to install docker"
-    - name: Something
-      block:
-        - name: Ubuntu
-          when: ansible_distribution == 'Ubuntu'
-        - name: Fedora
-          when: ansible_distribution == 'Fedora'
+    # - name: Something
+    #   block:
+    #     - name: Ubuntu
+    #       when: ansible_distribution == 'Ubuntu'
+    #     - name: Fedora
+    #       when: ansible_distribution == 'Fedora'
 
 - name: OhMyZSH + configurations
   hosts: localhost
