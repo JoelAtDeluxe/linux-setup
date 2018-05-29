@@ -225,7 +225,7 @@
           src: "/tmp/{{ item.name }}.zip"
           dest: "/tmp/{{ item.name }}"
         - copy:
-            src: "/tmp/{{ item.name }}/ttf/*.tmp
+            src: "/tmp/{{ item.name }}/ttf/*.tmp"
             dest: "{{ font_base }}/{{ item.name }}"
         - file: 
             state: absent 
