@@ -59,8 +59,7 @@
   tasks: 
     - name: Setup Git Creds
       block:
-        - name: Ubuntu
-          when: ansible_distribution == 'Ubuntu'
+        - when: ansible_distribution == 'Ubuntu'
           block:
             - name: Build libsecret
               shell: make
@@ -71,8 +70,7 @@
                 scope: global
                 name: credential.helper
                 value: /usr/libexec/git-core/git-credential-libsecret
-        - name: Fedora
-          when: ansible_distribution == 'Fedora'
+        - when: ansible_distribution == 'Fedora'
           git_config:
             scope: global
             name: credential.helper
@@ -206,6 +204,23 @@
         - shell: "{{ asdf }} plugin-add elm https://github.com/vic/asdf-elm.git"
         - shell: "{{ asdf }} install elm 0.18.0"
         - shell: "{{ asdf }} global  elm 0.18.0"
+
+- name: Setup local python
+  hosts: localhost
+  tasks:
+    # TODO: check pip before trying to install? Same with pip3
+    - name: Add pip
+      apt: 
+        state: latest
+      with_items: 
+        - python-pip
+        - python-pip3
+    # TODO: upgrade pip
+    # - name: Install some common libraries
+    #   pip: 
+        
+      
+
 
 # - name: Install Cool fonts
 #   hosts: localhost
