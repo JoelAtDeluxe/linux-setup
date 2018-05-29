@@ -142,7 +142,7 @@
 - name: OhMyZSH + configurations
   hosts: localhost
   become: yes
-  become_user: {{ user }}
+  become_user: "{{ user }}"
   vars:
     home: "/home/{{ user }}"
   tasks:
@@ -167,7 +167,7 @@
     - name: Clone project
       git:
         repo: https://github.com/asdf-vm/asdf.git
-        dest: {{ asdf_root }}
+        dest: "{{ asdf_root }}"
         refspec: v0.4.3
     - name: Update Bash/Zsh
       block:
@@ -216,23 +216,23 @@
     - name: Zipped TTF fonts
       block: 
         - get_url:
-          url: {{ item.url }}
+          url: "{{ item.url }}"
           dest: "/tmp/{{ item.name }}.zip"
         - file: 
             state: directory 
-            path: {{ font_base }}/{{ item.name }}
+            path: "{{ font_base }}/{{ item.name }}"
         - unarchive:
           src: "/tmp/{{ item.name }}.zip"
           dest: "/tmp/{{ item.name }}"
         - copy:
             src: "/tmp/{{ item.name }}/ttf/*.tmp
-            dest: {{ font_base }}/{{ item.name }}
+            dest: "{{ font_base }}/{{ item.name }}"
         - file: 
             state: absent 
             path: "/tmp/{{ item.name }}*"
       with_items:
         - { name: 'firacode', url: 'https://github.com/tonsky/FiraCode/releases/download/1.205/FiraCode_1.205.zip' }
-        - { name: 'hack', url: 'https://github.com/source-foundry/Hack/releases/download/v3.003/Hack-v3.003-ttf.zip' }
+        - { name: 'hack',     url: 'https://github.com/source-foundry/Hack/releases/download/v3.003/Hack-v3.003-ttf.zip' }
       
     # - name: FiraCode
     #   vars:
