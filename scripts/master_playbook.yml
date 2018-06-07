@@ -3,6 +3,7 @@
 
 - name: Update Repos, bundled software
   hosts: localhost
+  become: yes
   tasks:
     - name: Ubuntu
       apt: 
@@ -139,10 +140,8 @@
 
 - name: OhMyZSH + configurations
   hosts: localhost
-  become: yes
-  become_user: "{{ user }}"
   vars:
-    home: "/home/{{ user }}"
+    home: ansible_env.HOME
   tasks:
     - name: Get OhMyZSH
       shell: "sh -c '$(wget https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh -O -)'"
@@ -158,7 +157,7 @@
 - name: ASDF version manager
   hosts: localhost
   vars:
-    home: "/home/{{ user }}"
+    home: ansible_env.HOME
     asdf_root: "{{ home }}/.asdf"
     asdf: "{{ asdf_root }}/bin/asdf"
   tasks:
