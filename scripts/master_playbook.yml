@@ -47,7 +47,7 @@
   # Two flavors of tools: Stuff we'll use directly
   # Stuff we'll use indirectly (e.g. maybe erlang requires gcc)
   hosts: localhost
-  become: true
+  become: yes
   vars:
     std_software:
       - dkms
@@ -67,11 +67,13 @@
               args:
                 chdir: /usr/share/doc/git/contrib/credential/libsecret
             - name: Set libsecret
+              become: no
               git_config:
                 scope: global
                 name: credential.helper
                 value: /usr/libexec/git-core/git-credential-libsecret
         - when: ansible_distribution == 'Fedora'
+          become: no
           git_config:
             scope: global
             name: credential.helper
