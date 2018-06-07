@@ -26,4 +26,4 @@ will be running Gnome as their desktop environment. Most of the playbook should 
 
 ## Running
 
-Simply run `ansible-playbook master-playbook.yml` to start the process
+Simply run `ansible-playbook master-playbook.yml --ask-become-pass` to start the process. Note: this will prompt for the sudo password
