@@ -12,7 +12,7 @@ will be running Gnome as their desktop environment. Most of the playbook should 
 * Install:
     * ansible
 * Run as:
-    * root
+    * yourself (i.e. the user you want to have specific user settings)
 
 ### Notes for Fedora
 
