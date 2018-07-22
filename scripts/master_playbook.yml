@@ -31,86 +31,87 @@
       - zsh
       - unzip
   tasks:
-    - name: Add standard tooling (Ubuntu)
-      apt: 
-        state: latest
-      with_items: "{{ std_software }}"
-      when: ansible_distribution == 'Ubuntu'
-    - name: Add Standard Tooling (Fedora)
-      dnf:
+    - name: Add standard tooling
+      package: 
         name: '{{item}}'
-        state: latest
-      with_items: "{{ std_software }}"
-      when: ansible_distribution == 'Fedora'
+        state: present
+      with_items: '{{std_software}}'
 
 - name: Install User tools
   hosts: localhost
   become: yes
   vars:
-    utilities:
-      - { deb: 'filezilla',          rpm: 'filezilla'}
-      - { deb: 'gparted',            rpm: 'gparted'}
-      - { deb: 'gnome-tweak-tool',   rpm: 'gnome-tweak-tool'}
-      - { deb: 'mediainfo',          rpm: 'mediainfo'}
-      - { deb: 'imagemagick',        rpm: 'ImageMagick'}
-      - { deb: 'chrome-gnome-shell', rpm: 'chrome-gnome-shell'}
-      - { deb: 'gnome-disk-utility', rpm: 'gnome-disk-utility'}
+    generic_utilities:
+      - filezilla
+      - gparted
+      - gnome-tweak-tool
+      - mediainfo
+      - chrome-gnome-shell
+      - gnome-disk-utility
+      - VirtualBox
+      - pithos
+      - yarn
 
-      - { deb: 'VirtualBox',         rpm: 'VirtualBox'}
-      - { deb: 'pithos',             rpm: 'pithos'}
-      - { deb: 'sublime-text',       rpm: 'sublime-text'}
-      - { deb: 'yarn',               rpm: 'yarn'}
+    distro_utils:
+      - { deb: 'imagemagick',  rpm: 'ImageMagick'}
+
     pkg_files:
-      - { name: '/tmp/vivaldi', deb_url: 'https://downloads.vivaldi.com/stable/vivaldi-stable_1.14.1077.60-1_amd64.deb',               rpm_url: 'https://downloads.vivaldi.com/stable/vivaldi-stable-1.14.1077.60-1.x86_64.rpm' }
-      - { name: '/tmp/bcmp',    deb_url: 'https://www.scootersoftware.com/bcompare-4.2.4.22795_amd64.deb',                             rpm_url: 'https://www.scootersoftware.com/bcompare-4.2.4.22795.x86_64.rpm' }
-      - { name: '/tmp/slack',   deb_url: 'https://downloads.slack-edge.com/linux_releases/slack-desktop-3.2.0-beta25a7a50e-amd64.deb', rpm_url: 'https://downloads.slack-edge.com/linux_releases/slack-3.1.1-0.1.fc21.x86_64.rpm' }
-      - { name: '/tmp/vagrant', deb_url: 'https://releases.hashicorp.com/vagrant/2.1.1/vagrant_2.1.1_x86_64.deb',                      rpm_url: 'https://releases.hashicorp.com/vagrant/2.0.4/vagrant_2.0.4_x86_64.rpm' }
+      - { name: '/tmp/vivaldi', deb_url: 'https://downloads.vivaldi.com/stable/vivaldi-stable_1.14.1077.60-1_amd64.deb',               
+                                rpm_url: 'https://downloads.vivaldi.com/stable/vivaldi-stable-1.14.1077.60-1.x86_64.rpm' }
+      - { name: '/tmp/bcmp',    deb_url: 'https://www.scootersoftware.com/bcompare-4.2.4.22795_amd64.deb',                             
+                                rpm_url: 'https://www.scootersoftware.com/bcompare-4.2.4.22795.x86_64.rpm' }
+      - { name: '/tmp/slack',   deb_url: 'https://downloads.slack-edge.com/linux_releases/slack-desktop-3.2.0-beta25a7a50e-amd64.deb', 
+                                rpm_url: 'https://downloads.slack-edge.com/linux_releases/slack-3.1.1-0.1.fc21.x86_64.rpm' }
+      - { name: '/tmp/vagrant', deb_url: 'https://releases.hashicorp.com/vagrant/2.1.1/vagrant_2.1.1_x86_64.deb',                      
+                                rpm_url: 'https://releases.hashicorp.com/vagrant/2.0.4/vagrant_2.0.4_x86_64.rpm' }
+      - { name: '/tmp/vscode',  deb_url: 'https://az764295.vo.msecnd.net/stable/3aeede733d9a3098f7b4bdc1f66b63b0f48c1ef9/code_1.22.2-1523551015_amd64.deb', 
+                                rpm_url: 'https://az764295.vo.msecnd.net/stable/3aeede733d9a3098f7b4bdc1f66b63b0f48c1ef9/code-1.22.2-1523551168.el7.x86_64.rpm' }
   tasks:
-    - name: Collect fedora version
-      when: ansible_distribution == 'Fedora'
+    - name: Prep Distros
       block:
-        - command: "echo $( rpm -E %fedora )"
-          register: cmd_out
-        - set_fact:
-            fedora_current: "{{ cmd_out.stdout }}"
-    - name: Add common YUM reops
-      when: ansible_distribution == 'Fedora'
-      yum_repository:
-        name: "{{ item.name }}"
-        description: "{{ item.description }}"
-        baseurl: "{{ item.url }}"
-      with_items:
-        - { name: 'Sublime-text',        description: 'Sublime text Yum Repo',        url: 'https://download.sublimetext.com/rpm/stable/x86_64/sublime-text.repo' }
-        - { name: 'yarn',                description: 'Yarn Yum Repo',                url: 'https://dl.yarnpkg.com/rpm/yarn.repo' }
-        - { name: 'rpm-fusion-free',     description: 'Free RPM Fusion yum repo',     url: 'https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-{{fedora_current}}.noarch.rpm' }
-        - { name: 'rpm-fusion-non-free', description: 'Non-Free RPM Fusion yum repo', url: 'https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-{{fedora_current}}.noarch.rpm' }
+        - when: ansible_distribution == 'Fedora'
+          block:
+            - name: Add Repos
+              yum_repository:
+                name: "{{ item.name }}"
+                description: "{{ item.description }}"
+                baseurl: "{{ item.url }}"
+              with_items:
+                - { name: 'yarn',                description: 'Yarn Yum Repo',                url: 'https://dl.yarnpkg.com/rpm/yarn.repo' }
+                - { name: 'rpm-fusion-free',     description: 'Free RPM Fusion yum repo',     url: 'https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-{{ansible_distribution_version}}.noarch.rpm' }
+                - { name: 'rpm-fusion-non-free', description: 'Non-Free RPM Fusion yum repo', url: 'https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-{{ansible_distribution_version}}.noarch.rpm' }
               
-    - name: Get RPMs/deb files
+    - name: Get/Install RPMs/deb files
       block:
         - when: ansible_distribution == 'Ubuntu'
-          get_url:
-            url: "{{ item.deb_url }}"
-            dest: "{{ item.name }}.deb"
-          with_items: "{{pkg_files}}"
+          block:
+            - get_url:
+                url: "{{ item.deb_url }}"
+                dest: "{{ item.name }}.deb"
+              with_items: "{{pkg_files}}"
+            - apt: 
+                name: "{{ item.name }}.deb"
+                state: latest
+              with_items: 
+                - "{{ pkg_files }}"
+                - { name: '/tmp/crossftp', deb_url: 'http://www.crossftp.com/crossftp_1.98.8.deb' }
         - when: ansible_distribution == 'Fedora'
-          get_url:
-            url: "{{ item.rpm_url }}"
-            dest: "{{ item.name }}.rpm"
-          with_items: "{{pkg_files}}"
-    - name: Install rpm/deb files
-      block:
-        - when: ansible_distribution == 'Ubuntu'
-          apt: 
-            name: "{{ item.name }}.deb"
-            state: latest
-          with_items: 
-            - "{{ pkg_files }}"
-            - {name: '/tmp/crossftp', deb_url: 'http://www.crossftp.com/crossftp_1.98.8.deb'}
-        - when: ansible_distribution == 'Fedora'
-          dnf: 
-            name: "{{ item.name }}.rpm"
-            state: latest
-          with_items: "{{pkg_files}}"
+          block:
+            - get_url:
+                url: "{{ item.rpm_url }}"
+                dest: "{{ item.name }}.rpm"
+              with_items: "{{pkg_files}}"
+            - dnf: 
+                name: "{{ item.name }}.rpm"
+                state: latest
+              with_items: "{{pkg_files}}"
+
+    - name: Install generic files
+      package:
+        name: '{{item}}'
+        state: present
+      with_items: "{{generic_utilities}}"
+
     - name: Install pre-packaged software
       block:
         - when: ansible_distribution == 'Ubuntu'
@@ -118,18 +119,59 @@
             name: "{{ item }}"
             state: latest
           with_items:
-            - "{{ utilities }}"
+            - "{{ distro_utils }}"
             - nfs-kernel-server
             - virtualbox-guest-dkms
+            - nautilus-open-terminal
         - when: ansible_distribution == 'Fedora'
           dnf:
             name: "{{ item }}"
             state: latest
           with_items:
-            - "{{ utilities }}"
-            
-
+            - "{{ distro_utils }}"
+            - gnome-terminal-nautilus
+    
+    - name: Install VSCode extensions
+      block:
+        # Markdown linter
+        - shell: code --install-extension DavidAnson.vscode-markdownlint
+        - shell: code --install-extension yzhang.markdown-all-in-one
+        # XML Tools (parsing, etc)
+        - shell: code --install-extension DotJoshJohnson.xml
+        # Material Icons
+        - shell: code --install-extension PKief.material-icon-theme
+        # Docker
+        - shell: code --install-extension PeterJausovec.vscode-docker
+        # Git History
+        - shell: code --install-extension donjayamanne.githistory
+        # Theme: Dark+ for elixir
+        - shell: code --install-extension kkalita.dark-plus-elixir
+        # Go lang support
+        - shell: code --install-extension lukehoban.Go
+        # Elixir support
+        - shell: code --install-extension mjmcloug.vscode-elixir
+        # Python support
+        - shell: code --install-extension ms-python.python
+        # Chrome Debugger
+        - shell: code --install-extension msjsdiag.debugger-for-chrome
+        # Rubby support
+        - shell: code --install-extension rebornix.Ruby
+        # Diffing
+        - shell: code --install-extension ryu1kn.partial-diff
+        # HCL/nomad
+        - shell: code --install-extension wholroyd.hcl
+        # VS Code Live Share
+        - shell: code --install-extension MS-vsliveshare.vsliveshare
+        # .env loader
+        - shell: code --install-extension mikestead.dotenv
+        # Case-changer
+        - shell: code --install-extension wmaurer.change-case
           
+
+
+
+
+
 
 - name: Developer Tools
   # Two flavors of tools: Stuff we'll use directly
@@ -154,18 +196,13 @@
               shell: make
               args:
                 chdir: /usr/share/doc/git/contrib/credential/libsecret
-            - name: Set libsecret
-              become: no
-              git_config:
-                scope: global
-                name: credential.helper
-                value: /usr/libexec/git-core/git-credential-libsecret
-        - when: ansible_distribution == 'Fedora'
+        - name: Set libsecret
           become: no
           git_config:
             scope: global
             name: credential.helper
             value: /usr/libexec/git-core/git-credential-libsecret
+
     - name: Add Tooling
       block:
         - when: ansible_distribution == 'Ubuntu'
@@ -292,6 +329,11 @@
 #         - shell: "{{ asdf }} plugin-add elm https://github.com/vic/asdf-elm.git"
 #         - shell: "{{ asdf }} install elm 0.18.0"
 #         - shell: "{{ asdf }} global  elm 0.18.0"
+#     - name: Add Kotlin
+#       block:
+#         - shell: "{{ asdf }} plugin-add kotlin https://github.com/missingcharacter/asdf-kotlin.git
+#         - shell: "{{ asdf }} install kotlin 1.2.51"
+#         - shell: "{{ asdf }} global  kotlin 1.2.51"
 
 - name: ASDF version manager
   hosts: localhost
