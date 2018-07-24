@@ -5,14 +5,13 @@
   hosts: localhost
   become: yes
   tasks:
-    - name: Ubuntu
+    - name: Ubuntu Prep Apt
       apt: 
-        name: "*"
         state: latest
         upgrade: yes
         update_cache: yes
       when: ansible_distribution == 'Ubuntu'
-    - name: Fedora
+    - name: Fedora Prep DNF
       dnf:
         name: "*"
         state: latest
@@ -30,6 +29,7 @@
       - konsole
       - zsh
       - unzip
+      - locate
   tasks:
     - name: Add standard tooling
       package: 
@@ -48,12 +48,15 @@
       - mediainfo
       - chrome-gnome-shell
       - gnome-disk-utility
-      - VirtualBox
+      - gwenview
+      - shotwell
+      - krita
       - pithos
       - yarn
 
     distro_utils:
-      - { deb: 'imagemagick',  rpm: 'ImageMagick'}
+      - { deb: 'imagemagick', rpm: 'ImageMagick' }
+      - { deb: 'virtualbox',  rpm: 'VirtualBox'  }
 
     pkg_files:
       - { name: '/tmp/vivaldi', deb_url: 'https://downloads.vivaldi.com/stable/vivaldi-stable_1.14.1077.60-1_amd64.deb',               
@@ -66,6 +69,9 @@
                                 rpm_url: 'https://releases.hashicorp.com/vagrant/2.0.4/vagrant_2.0.4_x86_64.rpm' }
       - { name: '/tmp/vscode',  deb_url: 'https://az764295.vo.msecnd.net/stable/3aeede733d9a3098f7b4bdc1f66b63b0f48c1ef9/code_1.22.2-1523551015_amd64.deb', 
                                 rpm_url: 'https://az764295.vo.msecnd.net/stable/3aeede733d9a3098f7b4bdc1f66b63b0f48c1ef9/code-1.22.2-1523551168.el7.x86_64.rpm' }
+    deb_pkg_files:
+      - { name: '/tmp/crossftp', deb_url: 'http://www.crossftp.com/crossftp_1.98.8.deb' }
+
   tasks:
     - name: Prep Distros
       block:
@@ -93,13 +99,15 @@
             - get_url:
                 url: "{{ item.deb_url }}"
                 dest: "{{ item.name }}.deb"
-              with_items: "{{pkg_files}}"
+              with_items: 
+                - "{{pkg_files}}"
+                - "{{deb_pkg_files}}"
             - apt: 
-                name: "{{ item.name }}.deb"
-                state: latest
+                deb: "{{ item.name }}.deb"
               with_items: 
                 - "{{ pkg_files }}"
-                - { name: '/tmp/crossftp', deb_url: 'http://www.crossftp.com/crossftp_1.98.8.deb' }
+                - "{{deb_pkg_files}}"
+                
         - when: ansible_distribution == 'Fedora'
           block:
             - get_url:
@@ -127,7 +135,7 @@
             - "{{ distro_utils }}"
             - { deb: nfs-kernel-server }
             - { deb: virtualbox-guest-dkms }
-            - { deb: nautilus-open-terminal }
+            - { deb: nautilus-extension-gnome-terminal }
         - when: ansible_distribution == 'Fedora'
           dnf:
             name: "{{ item.rpm }}"
@@ -136,41 +144,42 @@
             - "{{ distro_utils }}"
             - { rpm: gnome-terminal-nautilus }
     
-    # - name: Install VSCode extensions
-    #   block:
-    #     # Markdown linter
-    #     - shell: code --install-extension DavidAnson.vscode-markdownlint
-    #     - shell: code --install-extension yzhang.markdown-all-in-one
-    #     # XML Tools (parsing, etc)
-    #     - shell: code --install-extension DotJoshJohnson.xml
-    #     # Material Icons
-    #     - shell: code --install-extension PKief.material-icon-theme
-    #     # Docker
-    #     - shell: code --install-extension PeterJausovec.vscode-docker
-    #     # Git History
-    #     - shell: code --install-extension donjayamanne.githistory
-    #     # Theme: Dark+ for elixir
-    #     - shell: code --install-extension kkalita.dark-plus-elixir
-    #     # Go lang support
-    #     - shell: code --install-extension lukehoban.Go
-    #     # Elixir support
-    #     - shell: code --install-extension mjmcloug.vscode-elixir
-    #     # Python support
-    #     - shell: code --install-extension ms-python.python
-    #     # Chrome Debugger
-    #     - shell: code --install-extension msjsdiag.debugger-for-chrome
-    #     # Rubby support
-    #     - shell: code --install-extension rebornix.Ruby
-    #     # Diffing
-    #     - shell: code --install-extension ryu1kn.partial-diff
-    #     # HCL/nomad
-    #     - shell: code --install-extension wholroyd.hcl
-    #     # VS Code Live Share
-    #     - shell: code --install-extension MS-vsliveshare.vsliveshare
-    #     # .env loader
-    #     - shell: code --install-extension mikestead.dotenv
-    #     # Case-changer
-    #     - shell: code --install-extension wmaurer.change-case
+    - name: Install VSCode extensions
+      # when: ansible_distribution == 'never'
+      block:
+        # Markdown linter
+        - shell: code --install-extension DavidAnson.vscode-markdownlint
+        - shell: code --install-extension yzhang.markdown-all-in-one
+        # XML Tools (parsing, etc)
+        - shell: code --install-extension DotJoshJohnson.xml
+        # Material Icons
+        - shell: code --install-extension PKief.material-icon-theme
+        # Docker
+        - shell: code --install-extension PeterJausovec.vscode-docker
+        # Git History
+        - shell: code --install-extension donjayamanne.githistory
+        # Theme: Dark+ for elixir
+        - shell: code --install-extension kkalita.dark-plus-elixir
+        # Go lang support
+        - shell: code --install-extension lukehoban.Go
+        # Elixir support
+        - shell: code --install-extension mjmcloug.vscode-elixir
+        # Python support
+        - shell: code --install-extension ms-python.python
+        # Chrome Debugger
+        - shell: code --install-extension msjsdiag.debugger-for-chrome
+        # Rubby support
+        - shell: code --install-extension rebornix.Ruby
+        # Diffing
+        - shell: code --install-extension ryu1kn.partial-diff
+        # HCL/nomad
+        - shell: code --install-extension wholroyd.hcl
+        # VS Code Live Share
+        - shell: code --install-extension MS-vsliveshare.vsliveshare
+        # .env loader
+        - shell: code --install-extension mikestead.dotenv
+        # Case-changer
+        - shell: code --install-extension wmaurer.change-case
           
 - name: Developer Tools
   # Two flavors of tools: Stuff we'll use directly
@@ -192,6 +201,20 @@
       block:
         - when: ansible_distribution == 'Ubuntu'
           block:
+            - name: install libsecret
+              apt:
+                name: "{{ item }}"
+                state: latest
+              with_items:
+                - libsecret-1-0
+                - libsecret-1-dev
+            - name: Download libsecret source
+              get_url:
+                url: "{{ item.url }}"
+                dest: "/usr/share/doc/git/contrib/credential/libsecret/{{item.name}}"
+              with_items:
+                - { name: 'Makefile', url: 'https://raw.githubusercontent.com/git/git/master/contrib/credential/libsecret/Makefile' }
+                - { name: 'git-credential-libsecret.c', url: 'https://raw.githubusercontent.com/git/git/master/contrib/credential/libsecret/git-credential-libsecret.c' }
             - name: Build libsecret
               shell: make
               args:
@@ -234,33 +257,26 @@
             - glib2-devel
             - ncurses-devel
 
-    - name: Add Docker
-      block:
-        # TODO: add in Ubuntu support
-        - when: ansible_distribution == 'Ubuntu'
-          block:
-            - apt_repository:
-                repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu"
-                state: present
-        - when: ansible_distribution == 'Fedora'
-          block:
-            - yum_repository:
-                name: docker-ce
-                description: Docker (community edition) repo
-                baseurl: https://download.docker.com/linux/fedora/docker-ce.repo
-        - package:
-            state: present
-            name: docker-ce
-
-      rescue:
-        - debug: 
-            msg: "Unable to install docker"
-    # - name: Something
+    # - name: Add Docker
     #   block:
-    #     - name: Ubuntu
-    #       when: ansible_distribution == 'Ubuntu'
-    #     - name: Fedora
-    #       when: ansible_distribution == 'Fedora'
+    #     # TODO: add in Ubuntu support
+    #     - when: ansible_distribution == 'Ubuntu'
+    #       block:
+    #         - apt_repository:
+    #             repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu"
+    #             state: present
+    #     - when: ansible_distribution == 'Fedora'
+    #       block:
+    #         - yum_repository:
+    #             name: docker-ce
+    #             description: Docker (community edition) repo
+    #             baseurl: https://download.docker.com/linux/fedora/docker-ce.repo
+    #     - package:
+    #         state: present
+    #         name: docker-ce
+    #   rescue:
+    #     - debug: 
+    #         msg: "Unable to install docker"
 
 - name: OhMyZSH + configurations
   hosts: localhost
@@ -269,7 +285,15 @@
     gopath: "{{home}}/Projects/golang"
   tasks:
     - name: Get OhMyZSH
-      shell: "sh -c \"$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)\""
+      get_url: 
+        url: https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh
+        dest: ./install.sh
+    - name: Set script to executable
+      file: 
+        path: ./install.sh
+        mode: 0777
+    - name: Install OhMyZSH
+      command: "sh -c ./install.sh"
     - name: Update Path
       shell: "echo -e '\nexport PATH=$HOME/bin:/usr/bin:$HOME/.local/bin:$PATH' >> {{ home }}/.zshrc"
     - name: Spot for Goapth
@@ -291,13 +315,13 @@
     asdf_root: "{{ home }}/.asdf"
     asdf: "{{ asdf_root }}/bin/asdf"
     sdks: 
-      - { lang: erlang, url: "https://github.com/asdf-vm/asdf-erlang.git", version: 20.3 }
-      - { lang: elixir, url: "https://github.com/asdf-vm/asdf-elixir.git", version: 1.6 }
-      - { lang: golang, url: "https://github.com/kennyp/asdf-golang.git",  version: 1.10 }
+      - { lang: erlang, url: "https://github.com/asdf-vm/asdf-erlang.git", version: '20.3' }
+      - { lang: elixir, url: "https://github.com/asdf-vm/asdf-elixir.git", version: '1.6' }
+      - { lang: golang, url: "https://github.com/kennyp/asdf-golang.git",  version: '1.10' }
 
       # - { lang: nodejs, url: "https://github.com/asdf-vm/asdf-nodejs.git",          version: 10.7.0 }  # Problems verifying this version
-      - { lang: elm,    url: "https://github.com/vic/asdf-elm.git",                 version: 0.18.0 }
-      - { lang: kotlin, url: "https://github.com/missingcharacter/asdf-kotlin.git", version: 1.2.51 }
+      - { lang: elm,    url: "https://github.com/vic/asdf-elm.git",                 version: '0.18.0' }
+      - { lang: kotlin, url: "https://github.com/missingcharacter/asdf-kotlin.git", version: '1.2.51' }
   tasks:
     - name: Clone project
       git:
@@ -350,7 +374,7 @@
         state: latest
       with_items: 
         - python-pip
-        - python-pip3
+        - python3-pip
     - name: Add common python3 libraries
       command: "pip3 install --user {{ item }}"
       with_items: "{{ piplibs }}"
@@ -380,7 +404,7 @@
       with_items: "{{ zipped_fonts }}"
 
     - name: Unzip font
-      when: "{{ item.unzip }}" == "True"
+      when: "{{ item.unzip }} == True"
       unarchive:
         src: "/tmp/{{ item.name }}.zip"
         dest: "/tmp/{{ item.name }}"
