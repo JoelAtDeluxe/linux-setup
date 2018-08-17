@@ -136,6 +136,12 @@
             - { deb: nfs-kernel-server }
             - { deb: virtualbox-guest-dkms }
             - { deb: nautilus-extension-gnome-terminal }
+            - { deb: network-manager-openvpn } 
+            - { deb: network-manager-openvpn-gnome } 
+            - { deb: network-manager-vpnc } 
+            - { deb: network-manager-vpnc-gnome } 
+            - { deb: network-manager-openconnect } 
+            - { deb: network-manager-openconnect-gnome } 
         - when: ansible_distribution == 'Fedora'
           dnf:
             name: "{{ item.rpm }}"
